@@ -1,0 +1,19 @@
+{
+    "name": "patienceman/deper",
+    "description": "Dependencis injection wrapper/helper",
+    "type": "library",
+    "license": "Mit",
+    "autoload": {
+        "psr-4": {
+            "Patienceman\\Deper\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "manirabona-programer",
+            "email": "hseal419@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
