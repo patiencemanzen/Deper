@@ -3,115 +3,120 @@
 
     use Throwable;
     use Closure;
+    use Exception;
+    use Illuminate\Support\Str;
 
     trait Injectable {
         /**
-         * centralized classes
-         * @var array
+         * Stardand class scope identifier
+         * @var
          */
-        protected static $centralizedProperties = [];
+        protected $classScope = "to";
+
+        /**
+         * All mapped class properties
+         */
+        protected static $mappedObjects = [];
+
+        /**
+         * Deper utility class
+         */
+        protected static DeperUtils $deperUtils;
+
+        /**
+         * Deper utility class
+         */
+        protected static ClassInstances $classInstance;
 
         /**
          * Call function in current class
          *
          * @param string $method
          * @param string|array $parameters
+         * @return Exception|Object
          */
         public function __call($name, $arguments) {
-            if(isset($this->$name)) {
-                array_unshift($arguments, $this);
-
+            if(isset($this->$name))
                 return call_user_func_array($this->$name, $arguments);
-            }
 
-            return self::callMethod($name, $arguments);
+            return self::$deperUtils->findAndCallMethod($name, $arguments);
         }
 
 
         /**
          * Call function in current class
          *
-         * @param string $method
+         * @param string|static $name
          * @param string|array $parameters
+         * @return Exception|Object
          */
         public static function __callStatic($name, $arguments) {
-            if(isset(self::$name)) {
-                array_unshift($arguments, new self);
-
+            if(isset(self::$name))
                 return call_user_func_array(self::$name, $arguments);
-            }
 
-            return self::callMethod($name, $arguments);
+            return self::$deperUtils->findAndCallMethod($name, $arguments);
+        }
+
+        /**
+         * Call class property
+         *
+         * @param string $name
+         * @return Exception|Object|mixed
+         */
+        public function __get(string $name) {
+            if(Str::contains($name, $this->classScope))
+                return $this->depFrom(Str::after($name, $this->classScope));
+
+            if(isset($this->$name)) return $this->$name;
+
+            return self::$deperUtils->findAndCallProperty($name);
         }
 
         /**
          * Instatiate the classes
          *
-         * @return Clossure
+         * @param array $classes
+         * @return Dependencies|Object
          */
-        public static function inject(array $clossures) {
-            self::centeralizeProperties($clossures);
+        public static function inject(array $classes) {
+            if(empty($classes)) return;
+
+            self::$deperUtils = new DeperUtils();
+
+            self::$classInstance = new ClassInstances();
+
+            self::$deperUtils->cleanAndRegisterObject($classes);
 
             return new self;
         }
 
         /**
-         * Call a specified method if not exist in current class
+         * Map classes and aliases
          *
-         * @param string $method
-         * @param string|array $parameters
+         * @param array $aliases
+         * @return void
          */
-        public static function callMethod($name, $arguments) {
-            foreach(self::$centralizedProperties as $class) {
-                if(method_exists(app($class), $name)){
-                    return app($class)->$name(...$arguments);
-                }
+        public function mapClassAliases(array $aliases){
+            if(empty($aliases)) return;
+
+            foreach(self::$deperUtils->getObjects() as $key => $class){
+                self::$mappedObjects[$aliases[$key]] = $class;
             }
         }
 
         /**
-         * Dispatch the classes to the same level
+         * Call class with aliase by from function
          *
-         * @param array $classes
-         * @return array
+         * @param string $aliase
+         * @return Exception|Object
          */
-        public static function centeralizeProperties(array $classess): array {
-            foreach($classess as $class) {
-                self::catchIf(function() use ($class) {
-                    self::$centralizedProperties = array_merge(
-                        self::$centralizedProperties,
-                        [get_class(app($class))]
-                    );
-                }, function() use ($class) {
-                    self::catchIf(function() use ($class) {
-                        self::$centralizedProperties = array_merge(
-                            self::$centralizedProperties,
-                            [get_class($class)]
-                        );
-                    }, function() use ($class) {
-                        self::$centralizedProperties = array_merge(self::$centralizedProperties, [$class]);
-                    });
+        public function depFrom(string $alias){
+            self::$deperUtils->catchIf(function() use ($alias) {
+                    self::$mappedObjects[$alias];
+                }, function($e) use ($alias) {
+                    throw new Exception("Undefined class scope, register \"{$alias}\" inside Dependency aliases");
                 });
-            }
 
-            return self::$centralizedProperties;
-        }
-
-        /**
-         * Catch a potential exception and return a default value.
-         *
-         * @param  callable  $callback
-         * @param  mixed  $rescue
-         * @param  bool  $report
-         * @return mixed
-         */
-        public static function catchIf(callable $callback, $execute = null, $report = true) {
-            try {
-                return $callback();
-            } catch (Throwable $e) {
-                if($report) report($e);
-
-                return $execute instanceof Closure ? $execute($e) : $execute;
-            }
+            return self::$classInstance->accessLockedProperty(app(self::$mappedObjects[$alias]));
         }
     }

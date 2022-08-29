@@ -5,11 +5,12 @@
         use Injectable;
 
         /**
-         * Execute injection inside the class
+         * Execute injection and aliases inside the class
          *
-         * @return mixed|Injectable|Dependencies
+         * @return void
          */
         public function boot() {
-            return $this->inject($this->injections());
+            $this->inject($this->injections());
+            $this->mapClassAliases($this->aliases());
         }
     }
