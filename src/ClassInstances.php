@@ -2,6 +2,7 @@
     namespace Patienceman\Deper;
 
     use ReflectionClass;
+    use ReflectionMethod;
     use ReflectionProperty;
     use stdClass;
 
@@ -66,7 +67,9 @@
             foreach($methods as $method){
                 $method = $method->name;
                 $this->newObject->$method = function (...$parameters) use ($method, $obj) {
-                    return $obj->$method(...$parameters);
+                    $reflectedMethod = new ReflectionMethod($obj, $method);
+                    $reflectedMethod->setAccessible(true);
+                    return $reflectedMethod->invoke(new $obj, ...$parameters);
                 };
             };
         }
