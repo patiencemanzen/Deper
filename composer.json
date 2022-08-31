@@ -1,11 +1,27 @@
 {
     "name": "patienceman/deper",
-    "description": "Dependencis injection wrapper/helper",
-    "type": "library",
-    "license": "Mit",
+    "description": "One line Dependencies Injections for laravel and php",
+    "type": "package",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Patienceman\\Deper\\": "src/"
+        }
+    },
+    "keywords": [
+        "PHP",
+        "Dependencies",
+        "Laravel",
+        "Injections"
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Patienceman\\Deper\\DeperServiceProvider"
+            ],
+            "aliases": {
+                "Deper": "Patienceman\\Deper\\Facades\\Deper"
+            }
         }
     },
     "authors": [

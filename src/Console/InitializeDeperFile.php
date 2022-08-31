@@ -18,7 +18,7 @@
          *
          * @var string
          */
-        protected $description = 'Create your cutom dependecies wrapper';
+        protected $description = 'Create your custom dependecies injector';
 
         /**
          * Create a new command instance.
@@ -83,6 +83,24 @@ public function getFileInitialContents($namespace, $className) {
         public function injections(): array {
             return [
                 // \App\Spaces\Human\SpaceMan::class,
+            ];
+        }
+
+        /**
+         * ---------------------------------------------------------------------
+         * Class aliases for mapping
+         * ---------------------------------------------------------------------
+         * Register injection aliases to be called whenever you
+         * need to be specific about class calling.
+         *
+         * Note the arrangement matter! how do you arrange your
+         *       aliases will be mapped to a class in order.
+         *
+         * @return array
+         */
+        public function aliases() : array {
+            return [
+                // 'SpaceMan'
             ];
         }
     }
